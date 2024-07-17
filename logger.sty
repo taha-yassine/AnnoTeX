@@ -1,0 +1,19 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{logger}[2024/07/17 v0.3 Simple Logger for Debugging]
+
+% Define the output file
+\newwrite\debuglogfile
+
+% Open log file and write initial message
+\AtBeginDocument{%
+  \immediate\openout\debuglogfile=output.txt
+  \immediate\write\debuglogfile{Compilation started}%
+}
+
+% Write final message and close log file
+\AtEndDocument{%
+  \immediate\write\debuglogfile{Compilation ended}%
+  \immediate\closeout\debuglogfile
+}
+
+\endinput
