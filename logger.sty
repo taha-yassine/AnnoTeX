@@ -1,19 +1,45 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{logger}[2024/07/17 v0.3 Simple Logger for Debugging]
+\ProvidesPackage{logger}[2024/07/19 v1.5 Table Logger with Structured Output]
 
-% Define the output file
-\newwrite\debuglogfile
+\RequirePackage{etoolbox}
+\RequirePackage{zref-user}
+\RequirePackage{zref-savepos}
 
-% Open log file and write initial message
 \AtBeginDocument{%
-  \immediate\openout\debuglogfile=output.txt
-  \immediate\write\debuglogfile{Compilation started}%
+  % Open log file
+  \newwrite\outputfile
+  \immediate\openout\outputfile=output.json
+  \immediate\write\outputfile{[}
+
+  % Counter for tables
+  \newcounter{loggertable}
+
+  % Patch the table environment
+  \patchcmd{\table}
+    {\@float{table}}
+    {\@float{table}%
+     \stepcounter{loggertable}%
+     \zsavepos{table-start-\theloggertable}}
+    {}{}
+
+  \patchcmd{\endtable}
+    {\end@float}
+    {\zsavepos{table-end-\theloggertable}%
+     \immediate\write\outputfile{%
+       \space\space\{%
+         "table": \theloggertable,%
+         "page": \thepage,%
+         "start": \{\space"x": \zposx{table-start-\theloggertable}, "y": \zposy{table-start-\theloggertable}\space\},%
+         "end": \{\space"x": \zposx{table-end-\theloggertable}, "y": \zposy{table-end-\theloggertable}\space\}%
+       \},% 
+     }%
+     \end@float}
+    {}{}
 }
 
-% Write final message and close log file
 \AtEndDocument{%
-  \immediate\write\debuglogfile{Compilation ended}%
-  \immediate\closeout\debuglogfile
+  \immediate\write\outputfile{]}%
+  \immediate\closeout\outputfile
 }
 
 \endinput
